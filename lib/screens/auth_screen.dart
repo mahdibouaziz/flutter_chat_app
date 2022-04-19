@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_app/widgets/auth/auth_form.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -16,7 +20,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
 
   Future<void> _submitAuthForm(String email, String password, String username,
-      bool isLogin, BuildContext ctx) async {
+      XFile _userImageFile, bool isLogin, BuildContext ctx) async {
     UserCredential authResult;
     try {
       setState(() {
@@ -32,6 +36,15 @@ class _AuthScreenState extends State<AuthScreen> {
           email: email,
           password: password,
         );
+
+        // perform the image upload
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('user_images')
+            .child('${authResult.user!.uid}.jpg');
+
+        ref.putFile(File(_userImageFile.path));
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(authResult.user!.uid)
@@ -51,9 +64,6 @@ class _AuthScreenState extends State<AuthScreen> {
       );
       print(err);
     }
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override
